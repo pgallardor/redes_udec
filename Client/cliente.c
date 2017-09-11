@@ -65,11 +65,15 @@ main(int argc, char * argv[]){
         	bzero(buffer, sizeof(buffer));
         }while(file_size > 0);
 
+        close(file);
+
+
         //copypasta del transmisor, comentar antes de usar
         int sock;
         struct  sockaddr_in name;
         struct  hostent *hp, *gethostbyname();
 
+        file = open("recibido.men", O_RDONLY);
 /********************************************************************/
         sock= socket(AF_INET, SOCK_DGRAM, 0);
         if (sock < 0) {
@@ -86,10 +90,24 @@ main(int argc, char * argv[]){
         name.sin_family = AF_INET;
         name.sin_port = htons(atoi(argv[2]));
 
-        if(sendto(sock, (void *)&to_send, sizeof(bloque), 0, (struct sockaddr * )&name, sizeof(name))<0)
-                perror("enviando el datagrama");
+        to_send.tx = 0xf80f41e4292d;
+        to_send.narch = "lol.men";
         
-        close(sock);
+        while(1){
+        	to_send.nb = 0;
+        	do{
+        		file_size = read(file, to_send.bytes, sizeof(to_send.bytes));
+        		if (file_size <= 0) break;
+        		to_send.bb = file_size;
+
+        		if(sendto(sock, (void *)&to_send, sizeof(bloque), 0, (struct sockaddr * )&name, sizeof(name))<0)
+            	    perror("enviando el datagrama");
+
+        		to_send.nb += 1;
+        		bzero(to_send.bytes, sizeof(to_send.bytes));
+        	}while(file_size > 0);
+        }
+        
         close(file);
         close(conexion);
 }
