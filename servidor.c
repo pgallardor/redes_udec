@@ -60,12 +60,17 @@ main(int argc, char * argv[]){
         sock = obtenerSocket(argv[1]);
         conexion = aceptarConexion(sock); //espera y acepta conexion del cliente
 /********************************************************************/
-        while (read(file, buffer, sizeof(buffer)) > 0 || 1){
-            //write(1, buffer, sizeof(buffer));
-            write(conexion, buffer, sizeof(buffer));
+        int sent_size;
+
+        do{
+            sent_size = read(file, buffer, sizeof(buffer));
+            if (sent_size <= 0) break;
+            write(conexion, buffer, sent_size);
             //l=read(conexion, &numero, sizeof(numero)); //recibe del cliente
             bzero(buffer, sizeof(buffer));
-        }      
+
+        }while(sent_size > 0);
+        
         close(file);
         close(conexion);
 }

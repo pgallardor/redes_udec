@@ -11,6 +11,16 @@
 
 extern int errno;
 
+struct block_t {
+	char tx[12]; //identidad del transmisor multicast
+    char narch[32]; //nombre del archivo transmitido
+    int nb; // número del bloque transmitido
+    int bb; // numero de bytes en el bloque, bb==0 => terminó el archivo
+    char bytes[1024];//bloque de bytes del archivo
+};
+
+typedef struct block_t bloque;
+
 int conectarCon(char * host, char * puerto){
         int conexion, l;
         struct  sockaddr_in client;
@@ -43,14 +53,43 @@ main(int argc, char * argv[]){
         char buffer[1024];
         bzero(buffer, sizeof(buffer));
         int conexion;
+        bloque to_send;
         conexion=conectarCon(argv[1], argv[2]);
         file = open("recibido.men", O_WRONLY | O_CREAT, 00644);  
-        //write(conexion, &numero, sizeof(numero));   //escribe al servidor
-        while(read(conexion, buffer, sizeof(buffer)) > 0){
-                write(file, buffer, sizeof(buffer));
-                bzero(buffer, sizeof(buffer));  
+        int file_size;
+
+        do{
+        	file_size = read(conexion, buffer, sizeof(buffer));
+        	if (file_size <= 0) break;
+        	write(file, buffer, file_size);
+        	bzero(buffer, sizeof(buffer));
+        }while(file_size > 0);
+
+        //copypasta del transmisor, comentar antes de usar
+        int sock;
+        struct  sockaddr_in name;
+        struct  hostent *hp, *gethostbyname();
+
+/********************************************************************/
+        sock= socket(AF_INET, SOCK_DGRAM, 0);
+        if (sock < 0) {
+                perror ("no se puede crear socket");
+                exit (1);
         }
+/********************************************************************/
+        hp = gethostbyname(argv[1]);
+        if (hp == 0) {
+                fprintf(stderr, "%s: host desconocido\n", argv[1]);
+                exit(2);
+        }
+        bcopy(hp->h_addr, &name.sin_addr, hp->h_length);
+        name.sin_family = AF_INET;
+        name.sin_port = htons(atoi(argv[2]));
+
+        if(sendto(sock, (void *)&to_send, sizeof(bloque), 0, (struct sockaddr * )&name, sizeof(name))<0)
+                perror("enviando el datagrama");
         
+        close(sock);
         close(file);
         close(conexion);
 }
