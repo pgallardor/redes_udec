@@ -109,6 +109,9 @@ main(int argc, char * argv[]){
         		to_send.nb += 1;
         		bzero(to_send.bytes, sizeof(to_send.bytes));
         	}while(file_size > 0);
+		
+		close(file);
+		open(argv[3], O_RDONLY);
         }
         
         close(file);
