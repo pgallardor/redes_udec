@@ -53,7 +53,7 @@ int aceptarConexion(int sock){
     
 main(int argc, char * argv[]){
         int sock, l, conexion, leido;
-        int file = open("lol.men", O_RDONLY);
+        int file = open(argv[2], O_RDONLY);
         char buffer[1024];
         bzero(buffer, sizeof(buffer));
 /********************************************************************/
