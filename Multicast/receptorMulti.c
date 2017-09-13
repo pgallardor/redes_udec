@@ -21,9 +21,7 @@ struct block_t {
     char bytes[1024];//bloque de bytes del archivo
 };
 
-typedef struct block_t bloque;
-
-bloque 
+typedef struct block_t bloque; 
 
 main(int argc, char * argv[]){
         struct  sockaddr_in server,stFrom;
@@ -63,7 +61,7 @@ main(int argc, char * argv[]){
 
 /********************************************************************/
 /********************************************************************/      
-        int rec_block;
+        int rec_block = 0;
         char name[1024];
 
         while(1){
@@ -77,14 +75,16 @@ main(int argc, char * argv[]){
                         exit(1);
                 }
 
-                if (received.nb == 0){
+                if (received.nb == 0 && rec_block == 0){
                         file = open(received.narch, O_WRONLY | O_CREAT, 00644);
                         strcpy(name, received.narch);
-                        rec_block = 0;
+                        rec_block++;
+			write(file, received.bytes, received.bb);
                 }
 
-                else{
-                                
+                else if(!strcmp(name, received.narch) && received.nb == rec_block){
+                        write(file, received.bytes, received.bb);
+			rec_block++;        
                 }
 
 
