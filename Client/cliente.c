@@ -97,7 +97,7 @@ main(int argc, char * argv[]){
         
         while(1){
         	to_send.nb = 0;
-		file_size = 0;
+		//file_size = 1;
         	do{
         		file_size = read(file, to_send.bytes, sizeof(to_send.bytes));
         		if (file_size <= 0) break;
