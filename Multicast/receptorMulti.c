@@ -66,9 +66,9 @@ main(int argc, char * argv[]){
 /********************************************************************/
 	int count = 0;
 	int file;
-	file = open("recibido_multicast.txt",O_WRONLY | O_CREAT, 00644);
+	file = open(argv[3] ,O_WRONLY | O_CREAT, 00644);
 
-    for(int j=0;j<1500;j++){
+    while(1){
 
 	int addr_size = sizeof(struct sockaddr_in);
 	int i = recvfrom(sock, (void *)&bq, sizeof(bq), 0,(struct sockaddr*)&stFrom, &addr_size);
@@ -81,6 +81,7 @@ main(int argc, char * argv[]){
     }
     else if(!strcmp(name,bq.narch) && bq.nb == count){
         write(file,bq.bytes,bq.bb);
+        printf("Block number: %d - Block size: %d\n", bq.nb, bq.bb);
         count++;
     }
 
@@ -91,6 +92,8 @@ main(int argc, char * argv[]){
 
         printf("it: %d Desde el host:%s puerta:%d, nombre_bloque:%s\n",j,inet_ntoa(stFrom.sin_addr), ntohs(stFrom.sin_port), bq.narch);
 
+        //puede fallar si el último bloque tiene tamaño 1024
+        if (bq.bb < 1024) break;
         /*if (read(sock,bufer,1024)<0)perror("recibiendo datagrama");
         printf("ip: %d || %s\n",sock,bufer);
 	*/
