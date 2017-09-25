@@ -8,26 +8,29 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
+
+
 // las direcciones multicast rango: 224.0.0.1 a 239.255.255.255
 
 extern int errno;
-//char bufer[1024];
+char bufer[1024];
 
-struct block_t {
-    char tx[12]; //identidad del transmisor multicast
-    char narch[32]; //nombre del archivo transmitido
-    int nb; // número del bloque transmitido
-    int bb; // numero de bytes en el bloque, bb==0 => terminó el archivo
-    char bytes[1024];//bloque de bytes del archivo
+struct bloque {
+          char tx[12];//identidad del transmisor multicast
+          char narch[32];//nombre del archivo transmitido
+          int nb;// número del bloque transmitido
+          int bb;// numero de bytes en el bloque, bb==0 => terminó el archivo
+          char bytes[1024];//bloque de bytes del archivo
 };
 
-typedef struct block_t bloque; 
+
 
 main(int argc, char * argv[]){
         struct  sockaddr_in server,stFrom;
         struct ip_mreq multi;
         int adrl, sock;
-        bloque received;
+	struct bloque bq;
 /********************************************************************/
         sock= socket(AF_INET, SOCK_DGRAM, 0);
         if (sock < 0) {
@@ -60,39 +63,38 @@ main(int argc, char * argv[]){
         printf("Me asignaron el puerto: %d\n",ntohs(server.sin_port));
 
 /********************************************************************/
-/********************************************************************/      
-        int rec_block = 0;
-        char name[1024];
+/********************************************************************/
+	int count = 0;
+	int file;
+	file = open("recibido_multicast.txt",O_WRONLY | O_CREAT, 00644);
 
-        while(1){
-                //file = open("recibido_multicast.txt",O_WRONLY | O_CREAT, 00644);
-                int addr_size = sizeof(struct sockaddr_in);
-                int i = recvfrom(sock, &received, sizeof(received), 0,(struct sockaddr*)&stFrom, &addr_size);
+    for(int j=0;j<1500;j++){
 
+	int addr_size = sizeof(struct sockaddr_in);
+	int i = recvfrom(sock, (void *)&bq, sizeof(bq), 0,(struct sockaddr*)&stFrom, &addr_size);
+	char name[100];
 
-                if (i < 0) {
-                        perror("recvfrom() fallo!\n");
-                        exit(1);
-                }
+	if(bq.nb == 0 && count == 0) {
+        strcpy(name,bq.narch);
+        write(file,bq.bytes,bq.bb);
+        count++;
+    }
+    else if(!strcmp(name,bq.narch) && bq.nb == count){
+        write(file,bq.bytes,bq.bb);
+        count++;
+    }
 
-                if (received.nb == 0 && rec_block == 0){
-                        file = open(received.narch, O_WRONLY | O_CREAT, 00644);
-                        strcpy(name, received.narch);
-                        rec_block++;
-			write(file, received.bytes, received.bb);
-                }
+        if (i < 0) {
+        	perror("recvfrom() fallo!\n");
+        	exit(1);
+        }
 
-                else if(!strcmp(name, received.narch) && received.nb == rec_block){
-                        write(file, received.bytes, received.bb);
-			rec_block++;        
-                }
-
-
-        
-        printf("Desde el host:%s puerta:%d, %s\n", inet_ntoa(stFrom.sin_addr), ntohs(stFrom.sin_port), bufer);
+        printf("it: %d Desde el host:%s puerta:%d, nombre_bloque:%s\n",j,inet_ntoa(stFrom.sin_addr), ntohs(stFrom.sin_port), bq.narch);
 
         /*if (read(sock,bufer,1024)<0)perror("recibiendo datagrama");
         printf("ip: %d || %s\n",sock,bufer);
-        */
+	*/
         }
+    close(file);
+
 }
