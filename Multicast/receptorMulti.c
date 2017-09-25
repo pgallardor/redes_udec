@@ -90,7 +90,7 @@ main(int argc, char * argv[]){
         	exit(1);
         }
 
-        printf("it: %d Desde el host:%s puerta:%d, nombre_bloque:%s\n",j,inet_ntoa(stFrom.sin_addr), ntohs(stFrom.sin_port), bq.narch);
+        printf("Desde el host:%s puerta:%d, nombre_bloque:%s\n",inet_ntoa(stFrom.sin_addr), ntohs(stFrom.sin_port), bq.narch);
 
         //puede fallar si el último bloque tiene tamaño 1024
         if (bq.bb < 1024) break;
